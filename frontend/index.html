@@ -1,0 +1,1431 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Git Migrator Tool
+  </title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0c10;
+      --bg2: #0f1219;
+      --bg3: #161b25;
+      --border: rgba(255, 255, 255, 0.07);
+      --border2: rgba(255, 255, 255, 0.13);
+      --text: #e8eaf0;
+      --muted: #7a8299;
+      --accent: #4f8eff;
+      --accent2: #7b5cf5;
+      --green: #2ecc8a;
+      --red: #f05252;
+      --yellow: #f5a623;
+      --github: #e8eaf0;
+      --gitlab: #fc6d26;
+      --bitbucket: #2684ff;
+      --mono: 'JetBrains Mono', monospace;
+      --sans: 'Syne', sans-serif;
+      --radius: 10px;
+      --transition: 0.18s ease;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--mono);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(79, 142, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(79, 142, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Glow orbs */
+    .orb1 {
+      position: fixed;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(79, 142, 255, 0.08) 0%, transparent 70%);
+      top: -200px;
+      left: -100px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .orb2 {
+      position: fixed;
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(123, 92, 245, 0.07) 0%, transparent 70%);
+      bottom: -150px;
+      right: -100px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 20px 60px;
+    }
+
+    /* Header */
+    header {
+      padding: 32px 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 40px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: var(--sans);
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .logo-sub {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 500;
+      border: 1px solid var(--border2);
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+
+    .badge.online {
+      border-color: rgba(46, 204, 138, 0.3);
+      color: var(--green);
+    }
+
+    .badge.online::before {
+      content: '● ';
+      font-size: 8px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 2px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 4px;
+      margin-bottom: 32px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px 16px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      border-radius: 7px;
+      transition: all var(--transition);
+    }
+
+    .tab-btn.active {
+      background: var(--bg3);
+      color: var(--text);
+      border: 1px solid var(--border2);
+    }
+
+    .tab-btn:hover:not(.active) {
+      color: var(--text);
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-family: var(--sans);
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text);
+    }
+
+    .card-title .icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+    }
+
+    /* Grid layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 700px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Provider selector */
+    .provider-select {
+      display: flex;
+      gap: 8px;
+    }
+
+    .provider-btn {
+      flex: 1;
+      padding: 12px 8px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      transition: all var(--transition);
+      text-align: center;
+    }
+
+    .provider-btn:hover {
+      border-color: var(--border2);
+      color: var(--text);
+    }
+
+    .provider-btn.active {
+      border-color: var(--accent);
+      color: var(--text);
+      background: rgba(79, 142, 255, 0.08);
+    }
+
+    .provider-btn.github.active {
+      border-color: var(--github);
+      color: var(--github);
+      background: rgba(232, 234, 240, 0.06);
+    }
+
+    .provider-btn.gitlab.active {
+      border-color: var(--gitlab);
+      color: var(--gitlab);
+      background: rgba(252, 109, 38, 0.08);
+    }
+
+    .provider-btn.bitbucket.active {
+      border-color: var(--bitbucket);
+      color: var(--bitbucket);
+      background: rgba(38, 132, 255, 0.08);
+    }
+
+    .provider-icon {
+      font-size: 20px;
+      margin-bottom: 4px;
+    }
+
+    /* Form elements */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+      outline: none;
+      transition: border-color var(--transition);
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--accent);
+    }
+
+    input::placeholder {
+      color: var(--muted);
+    }
+
+    select option {
+      background: var(--bg3);
+    }
+
+    .input-with-btn {
+      display: flex;
+      gap: 8px;
+    }
+
+    .input-with-btn input {
+      flex: 1;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius);
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.88;
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--border2);
+      color: var(--text);
+    }
+
+    .btn-danger {
+      background: rgba(240, 82, 82, 0.12);
+      border: 1px solid rgba(240, 82, 82, 0.3);
+      color: var(--red);
+    }
+
+    .btn-danger:hover {
+      background: rgba(240, 82, 82, 0.2);
+    }
+
+    .btn-lg {
+      padding: 14px 28px;
+      font-size: 14px;
+      width: 100%;
+    }
+
+    /* Options grid */
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 10px;
+    }
+
+    .option-card {
+      padding: 12px 14px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all var(--transition);
+      user-select: none;
+    }
+
+    .option-card:hover {
+      border-color: var(--border2);
+    }
+
+    .option-card.checked {
+      border-color: var(--accent);
+      background: rgba(79, 142, 255, 0.07);
+    }
+
+    .option-card input[type="checkbox"] {
+      display: none;
+    }
+
+    .option-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    .option-card.checked .option-label {
+      color: var(--text);
+    }
+
+    .option-check {
+      width: 16px;
+      height: 16px;
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 10px;
+    }
+
+    .option-card.checked .option-check {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* Branch tags input */
+    .tags-input {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 8px 10px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      min-height: 44px;
+      align-items: center;
+    }
+
+    .tags-input:focus-within {
+      border-color: var(--accent);
+    }
+
+    .tag {
+      padding: 3px 10px;
+      background: rgba(79, 142, 255, 0.12);
+      border: 1px solid rgba(79, 142, 255, 0.25);
+      border-radius: 20px;
+      font-size: 11px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .tag-remove {
+      cursor: pointer;
+      opacity: 0.7;
+    }
+
+    .tag-remove:hover {
+      opacity: 1;
+    }
+
+    .tags-input input {
+      border: none;
+      background: transparent;
+      padding: 2px 4px;
+      flex: 1;
+      min-width: 80px;
+      font-size: 12px;
+    }
+
+    .tags-input input:focus {
+      border: none;
+    }
+
+    /* Repo picker */
+    .repo-list {
+      max-height: 220px;
+      overflow-y: auto;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-top: 8px;
+    }
+
+    .repo-item {
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background var(--transition);
+    }
+
+    .repo-item:last-child {
+      border-bottom: none;
+    }
+
+    .repo-item:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .repo-item.selected {
+      background: rgba(79, 142, 255, 0.08);
+      color: var(--accent);
+    }
+
+    .repo-private {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    /* Progress / Status */
+    .progress-section {
+      display: none;
+    }
+
+    .progress-section.show {
+      display: block;
+    }
+
+    .status-bar {
+      padding: 16px 20px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .status-dot.running {
+      background: var(--accent);
+      animation: pulse 1.2s infinite;
+    }
+
+    .status-dot.completed {
+      background: var(--green);
+    }
+
+    .status-dot.failed {
+      background: var(--red);
+    }
+
+    .status-dot.queued {
+      background: var(--yellow);
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.4;
+        transform: scale(0.7);
+      }
+    }
+
+    .status-text {
+      font-size: 13px;
+      flex: 1;
+    }
+
+    .status-step {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .progress-bar {
+      height: 4px;
+      background: var(--bg3);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 4px;
+      transition: width 0.4s ease;
+      width: 0%;
+    }
+
+    /* Results grid */
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .result-card {
+      padding: 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      text-align: center;
+    }
+
+    .result-card.success {
+      border-color: rgba(46, 204, 138, 0.25);
+    }
+
+    .result-card.failed {
+      border-color: rgba(240, 82, 82, 0.25);
+    }
+
+    .result-number {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--green);
+      font-family: var(--sans);
+    }
+
+    .result-number.zero {
+      color: var(--muted);
+    }
+
+    .result-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* History */
+    .history-item {
+      padding: 16px 20px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .history-badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+
+    .history-badge.completed {
+      background: rgba(46, 204, 138, 0.12);
+      color: var(--green);
+      border: 1px solid rgba(46, 204, 138, 0.25);
+    }
+
+    .history-badge.failed {
+      background: rgba(240, 82, 82, 0.12);
+      color: var(--red);
+      border: 1px solid rgba(240, 82, 82, 0.25);
+    }
+
+    .history-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .history-route {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .history-time {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .history-empty {
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      padding: 40px;
+    }
+
+    /* Schedule */
+    .schedule-item {
+      padding: 16px 20px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    /* Arrow */
+    .arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      font-size: 18px;
+      padding: 8px 0;
+      opacity: 0.7;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border2);
+      border-radius: 4px;
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 12px 18px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-family: var(--mono);
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 100;
+      max-width: 300px;
+    }
+
+    #toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    #toast.success {
+      border-color: rgba(46, 204, 138, 0.4);
+      color: var(--green);
+    }
+
+    #toast.error {
+      border-color: rgba(240, 82, 82, 0.4);
+      color: var(--red);
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 20px 0;
+    }
+
+    .text-muted {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .mt-8 {
+      margin-top: 8px;
+    }
+
+    .mt-16 {
+      margin-top: 16px;
+    }
+
+    .flex-end {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .flex-between {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="orb1"></div>
+  <div class="orb2"></div>
+
+  <div class="container">
+    <header>
+      <div class="logo">
+        <div class="logo-icon">⚡</div>
+        <div>
+          Git Migrator Tool
+          <div class="logo-sub">GitHub · GitLab · Bitbucket</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <span class="badge online" id="healthBadge">Connecting...</span>
+        <span class="badge">v2.0</span>
+      </div>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('migrate')">⚡ Migrate</button>
+      <button class="tab-btn" onclick="switchTab('schedule')">🕐 Scheduled Sync</button>
+      <button class="tab-btn" onclick="switchTab('history')">📋 History</button>
+    </div>
+
+    <!-- ===== MIGRATE TAB ===== -->
+    <div id="tab-migrate" class="tab-panel active">
+
+      <div class="grid-2">
+        <!-- Source -->
+        <div class="card">
+          <div class="card-title"><span class="icon">📤</span> Source Repository</div>
+          <div class="form-group">
+            <label>Provider</label>
+            <div class="provider-select">
+              <button class="provider-btn github active" onclick="selectProvider('source','github',this)">
+                <div class="provider-icon">🐙</div>GitHub
+              </button>
+              <button class="provider-btn gitlab" onclick="selectProvider('source','gitlab',this)">
+                <div class="provider-icon">🦊</div>GitLab
+              </button>
+              <button class="provider-btn bitbucket" onclick="selectProvider('source','bitbucket',this)">
+                <div class="provider-icon">🪣</div>Bitbucket
+              </button>
+            </div>
+            <input type="hidden" id="sourceProvider" value="github">
+          </div>
+          <div class="form-group">
+            <label>Access Token</label>
+            <input type="password" id="sourceToken" placeholder="ghp_xxxxxxxxxxxx" oninput="clearRepos('source')">
+          </div>
+          <div class="form-group">
+            <label>Repository (owner/repo)</label>
+            <div class="input-with-btn">
+              <input type="text" id="sourceRepo" placeholder="e.g. torvalds/linux">
+              <button class="btn btn-secondary" onclick="loadRepos('source')">Browse</button>
+            </div>
+            <div id="sourceRepoList" class="repo-list" style="display:none"></div>
+          </div>
+        </div>
+
+        <!-- Target -->
+        <div class="card">
+          <div class="card-title"><span class="icon">📥</span> Target Repository</div>
+          <div class="form-group">
+            <label>Provider</label>
+            <div class="provider-select">
+              <button class="provider-btn github" onclick="selectProvider('target','github',this)">
+                <div class="provider-icon">🐙</div>GitHub
+              </button>
+              <button class="provider-btn gitlab active" onclick="selectProvider('target','gitlab',this)">
+                <div class="provider-icon">🦊</div>GitLab
+              </button>
+              <button class="provider-btn bitbucket" onclick="selectProvider('target','bitbucket',this)">
+                <div class="provider-icon">🪣</div>Bitbucket
+              </button>
+            </div>
+            <input type="hidden" id="targetProvider" value="gitlab">
+          </div>
+          <div class="form-group">
+            <label>Access Token</label>
+            <input type="password" id="targetToken" placeholder="glpat-xxxxxxxxxxxx" oninput="clearRepos('target')">
+          </div>
+          <div class="form-group">
+            <label>Target Repo (owner/repo or new name)</label>
+            <div class="input-with-btn">
+              <input type="text" id="targetRepo" placeholder="e.g. myorg/my-repo">
+              <button class="btn btn-secondary" onclick="loadRepos('target')">Browse</button>
+            </div>
+            <div id="targetRepoList" class="repo-list" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sync Options -->
+      <div class="card">
+        <div class="card-title"><span class="icon">⚙️</span> What to Migrate</div>
+        <div class="options-grid" id="optionsGrid">
+          <label class="option-card checked" onclick="toggleOption(this,'repository')">
+            <input type="checkbox" name="opt" value="repository" checked>
+            <div class="option-label">
+              <div class="option-check">✓</div>
+              📁 Repository
+            </div>
+          </label>
+          <label class="option-card checked" onclick="toggleOption(this,'branches')">
+            <input type="checkbox" name="opt" value="branches" checked>
+            <div class="option-label">
+              <div class="option-check">✓</div>
+              🌿 All Branches
+            </div>
+          </label>
+          <label class="option-card" onclick="toggleOption(this,'specific_branches')">
+            <input type="checkbox" name="opt" value="specific_branches">
+            <div class="option-label">
+              <div class="option-check"></div>
+              🌿 Specific Branches
+            </div>
+          </label>
+          <label class="option-card checked" onclick="toggleOption(this,'tags')">
+            <input type="checkbox" name="opt" value="tags" checked>
+            <div class="option-label">
+              <div class="option-check">✓</div>
+              🏷️ Tags
+            </div>
+          </label>
+          <label class="option-card" onclick="toggleOption(this,'issues')">
+            <input type="checkbox" name="opt" value="issues">
+            <div class="option-label">
+              <div class="option-check"></div>
+              🐛 Issues
+            </div>
+          </label>
+          <label class="option-card" onclick="toggleOption(this,'pull_requests')">
+            <input type="checkbox" name="opt" value="pull_requests">
+            <div class="option-label">
+              <div class="option-check"></div>
+              🔀 Pull Requests
+            </div>
+          </label>
+          <label class="option-card" onclick="toggleOption(this,'users')">
+            <input type="checkbox" name="opt" value="users">
+            <div class="option-label">
+              <div class="option-check"></div>
+              👥 Collaborators
+            </div>
+          </label>
+        </div>
+
+        <!-- Specific branches input (shown when specific_branches checked) -->
+        <div id="specificBranchesField" style="display:none;margin-top:16px">
+          <label>Branch names (press Enter to add)</label>
+          <div class="tags-input" id="branchTagsInput" onclick="document.getElementById('branchTagInput').focus()">
+            <input type="text" id="branchTagInput" placeholder="e.g. main, develop..."
+              onkeydown="handleBranchTag(event)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress section -->
+      <div id="progressSection" class="progress-section card">
+        <div class="card-title"><span class="icon">⚡</span> Migration Progress</div>
+        <div class="status-bar" id="statusBar">
+          <div class="status-dot queued" id="statusDot"></div>
+          <div>
+            <div class="status-text" id="statusText">Queued</div>
+            <div class="status-step" id="statusStep">Waiting to start...</div>
+          </div>
+          <div id="statusPercent" style="font-size:20px;font-weight:700;color:var(--accent)">0%</div>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div id="resultsGrid" class="results-grid"></div>
+      </div>
+
+      <button class="btn btn-primary btn-lg" id="migrateBtn" onclick="startMigration()">
+        ⚡ Start Migration
+      </button>
+    </div>
+
+    <!-- ===== SCHEDULE TAB ===== -->
+    <div id="tab-schedule" class="tab-panel">
+      <div class="card">
+        <div class="card-title"><span class="icon">➕</span> Create Scheduled Sync</div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Schedule Name</label>
+            <input type="text" id="scheduleName" placeholder="e.g. Nightly backup">
+          </div>
+          <div class="form-group">
+            <label>Interval</label>
+            <select id="scheduleInterval">
+              <option value="60">Every 1 hour</option>
+              <option value="360">Every 6 hours</option>
+              <option value="720">Every 12 hours</option>
+              <option value="1440" selected>Every 24 hours</option>
+              <option value="10080">Every week</option>
+              <option value="custom">Custom cron</option>
+            </select>
+          </div>
+        </div>
+        <div id="cronField" style="display:none" class="form-group">
+          <label>Cron expression</label>
+          <input type="text" id="scheduleCron" placeholder="0 2 * * * (every night at 2am)">
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Source (provider:owner/repo:token)</label>
+            <input type="text" id="schedSource" placeholder="github:owner/repo">
+          </div>
+          <div class="form-group">
+            <label>Target (provider:owner/repo:token)</label>
+            <input type="text" id="schedTarget" placeholder="gitlab:owner/repo">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Source Token</label>
+          <input type="password" id="schedSourceToken" placeholder="Source access token">
+        </div>
+        <div class="form-group">
+          <label>Target Token</label>
+          <input type="password" id="schedTargetToken" placeholder="Target access token">
+        </div>
+        <div class="flex-end mt-16">
+          <button class="btn btn-primary" onclick="createSchedule()">➕ Create Schedule</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🕐</span> Active Schedules</div>
+        <div id="scheduleList">
+          <div class="history-empty">No scheduled syncs yet</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== HISTORY TAB ===== -->
+    <div id="tab-history" class="tab-panel">
+      <div class="flex-between" style="margin-bottom:16px">
+        <div class="card-title" style="margin-bottom:0"><span class="icon">📋</span> Migration History</div>
+        <button class="btn btn-ghost" onclick="loadHistory()">↻ Refresh</button>
+      </div>
+      <div id="historyList">
+        <div class="history-empty">No migrations yet. Start your first migration!</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    const API = 'https://git-migrator-backend.onrender.com';
+    let currentJobId = null;
+    let pollInterval = null;
+    const branchTags = [];
+
+    // ── Health check ──────────────────────────────────────────────────
+    async function checkHealth() {
+      try {
+        const r = await fetch(`${API}/api/health`, { signal: AbortSignal.timeout(5000) });
+        if (r.ok) {
+          const badge = document.getElementById('healthBadge');
+          badge.textContent = '● API Online';
+          badge.className = 'badge online';
+        }
+      } catch (e) {
+        document.getElementById('healthBadge').textContent = 'API Offline';
+      }
+    }
+    checkHealth();
+
+    // ── Tab switching ─────────────────────────────────────────────────
+    function switchTab(name) {
+      document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', ['migrate', 'schedule', 'history'][i] === name));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === `tab-${name}`));
+      if (name === 'history') loadHistory();
+      if (name === 'schedule') loadSchedules();
+    }
+
+    // ── Provider selector ─────────────────────────────────────────────
+    function selectProvider(side, provider, btn) {
+      btn.closest('.provider-select').querySelectorAll('.provider-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(`${side}Provider`).value = provider;
+      clearRepos(side);
+    }
+
+    // ── Repo browser ──────────────────────────────────────────────────
+    async function loadRepos(side) {
+      const token = document.getElementById(`${side}Token`).value.trim();
+      const provider = document.getElementById(`${side}Provider`).value;
+      if (!token) { showToast('Enter access token first', 'error'); return; }
+      const list = document.getElementById(`${side}RepoList`);
+      list.style.display = 'block';
+      list.innerHTML = '<div class="repo-item" style="color:var(--muted)">Loading repositories...</div>';
+      try {
+        const r = await fetch(`${API}/api/repos`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ provider, token })
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || 'Failed');
+        list.innerHTML = '';
+        data.repos.slice(0, 100).forEach(repo => {
+          const item = document.createElement('div');
+          item.className = 'repo-item';
+          item.innerHTML = `<span>${repo.full_name}</span><span class="repo-private">${repo.private ? '🔒 private' : '🌐 public'}</span>`;
+          item.onclick = () => {
+            document.getElementById(`${side}Repo`).value = repo.full_name;
+            list.style.display = 'none';
+            list.querySelectorAll('.repo-item').forEach(i => i.classList.remove('selected'));
+            item.classList.add('selected');
+            showToast(`Selected: ${repo.full_name}`, 'success');
+          };
+          list.appendChild(item);
+        });
+        if (!data.repos.length) list.innerHTML = '<div class="repo-item" style="color:var(--muted)">No repositories found</div>';
+      } catch (e) {
+        list.innerHTML = `<div class="repo-item" style="color:var(--red)">Error: ${e.message}</div>`;
+      }
+    }
+
+    function clearRepos(side) {
+      document.getElementById(`${side}RepoList`).style.display = 'none';
+    }
+
+    // ── Options toggle ────────────────────────────────────────────────
+    function toggleOption(card, value) {
+      card.classList.toggle('checked');
+      const cb = card.querySelector('input');
+      cb.checked = card.classList.contains('checked');
+      const check = card.querySelector('.option-check');
+      check.textContent = cb.checked ? '✓' : '';
+      if (value === 'specific_branches') {
+        document.getElementById('specificBranchesField').style.display = cb.checked ? 'block' : 'none';
+      }
+    }
+
+    // ── Branch tags ───────────────────────────────────────────────────
+    function handleBranchTag(e) {
+      if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        const val = e.target.value.trim().replace(/,$/, '');
+        if (val && !branchTags.includes(val)) {
+          branchTags.push(val);
+          renderBranchTags();
+        }
+        e.target.value = '';
+      }
+    }
+
+    function renderBranchTags() {
+      const container = document.getElementById('branchTagsInput');
+      const inp = document.getElementById('branchTagInput');
+      container.innerHTML = '';
+      branchTags.forEach((tag, i) => {
+        const el = document.createElement('span');
+        el.className = 'tag';
+        el.innerHTML = `${tag} <span class="tag-remove" onclick="removeTag(${i})">✕</span>`;
+        container.appendChild(el);
+      });
+      container.appendChild(inp);
+    }
+
+    function removeTag(i) {
+      branchTags.splice(i, 1);
+      renderBranchTags();
+    }
+
+    // ── Collect options ───────────────────────────────────────────────
+    function getOptions() {
+      const opts = {};
+      document.querySelectorAll('#optionsGrid input[type="checkbox"]').forEach(cb => {
+        opts[cb.value] = cb.checked;
+      });
+      if (opts.specific_branches) opts.branch_names = [...branchTags];
+      return opts;
+    }
+
+    // ── Start migration ───────────────────────────────────────────────
+    async function startMigration() {
+      const sourceToken = document.getElementById('sourceToken').value.trim();
+      const targetToken = document.getElementById('targetToken').value.trim();
+      const sourceRepo = document.getElementById('sourceRepo').value.trim();
+      const targetRepo = document.getElementById('targetRepo').value.trim();
+      const sourceProvider = document.getElementById('sourceProvider').value;
+      const targetProvider = document.getElementById('targetProvider').value;
+
+      if (!sourceToken || !targetToken) { showToast('Both access tokens are required', 'error'); return; }
+      if (!sourceRepo || !targetRepo) { showToast('Both repository names are required', 'error'); return; }
+
+      document.getElementById('migrateBtn').disabled = true;
+      document.getElementById('progressSection').classList.add('show');
+      setStatus('queued', 'Queued', 'Submitting migration job...', 0);
+
+      try {
+        const r = await fetch(`${API}/api/migrate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            source_provider: sourceProvider,
+            target_provider: targetProvider,
+            source_token: sourceToken,
+            target_token: targetToken,
+            source_repo: sourceRepo,
+            target_repo: targetRepo,
+            options: getOptions(),
+          })
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || 'Failed to start');
+        currentJobId = data.job_id;
+        pollStatus();
+      } catch (e) {
+        setStatus('failed', 'Failed', e.message, 0);
+        document.getElementById('migrateBtn').disabled = false;
+        showToast(e.message, 'error');
+      }
+    }
+
+    function pollStatus() {
+      if (pollInterval) clearInterval(pollInterval);
+      pollInterval = setInterval(async () => {
+        if (!currentJobId) return;
+        try {
+          const r = await fetch(`${API}/api/migrate/${currentJobId}/status`);
+          const data = await r.json();
+          updateProgress(data);
+          if (data.status === 'completed' || data.status === 'failed') {
+            clearInterval(pollInterval);
+            document.getElementById('migrateBtn').disabled = false;
+            loadHistory();
+          }
+        } catch (e) { /* keep polling */ }
+      }, 1200);
+    }
+
+    function updateProgress(data) {
+      const pct = data.progress || 0;
+      setStatus(data.status, data.status.charAt(0).toUpperCase() + data.status.slice(1), data.current_step || '', pct);
+      if (data.results && Object.keys(data.results).length) renderResults(data.results);
+      if (data.status === 'completed') showToast('Migration completed!', 'success');
+      if (data.status === 'failed') showToast(`Failed: ${data.error}`, 'error');
+    }
+
+    function setStatus(type, text, step, pct) {
+      const dot = document.getElementById('statusDot');
+      dot.className = `status-dot ${type}`;
+      document.getElementById('statusText').textContent = text;
+      document.getElementById('statusStep').textContent = step;
+      document.getElementById('statusPercent').textContent = `${pct}%`;
+      document.getElementById('progressFill').style.width = `${pct}%`;
+    }
+
+    function renderResults(results) {
+      const grid = document.getElementById('resultsGrid');
+      grid.innerHTML = '';
+      const icons = { repository: '📁', branches: '🌿', specific_branches: '🌿', tags: '🏷️', issues: '🐛', pull_requests: '🔀', users: '👥' };
+      Object.entries(results).forEach(([key, val]) => {
+        if (!val) return;
+        const n = val.migrated ?? 0;
+        const card = document.createElement('div');
+        card.className = `result-card ${n > 0 ? 'success' : ''}`;
+        card.innerHTML = `
+      <div class="result-number ${n === 0 ? 'zero' : ''}">${n}</div>
+      <div class="result-label">${icons[key] || ''} ${key.replace('_', ' ')}</div>
+    `;
+        grid.appendChild(card);
+      });
+    }
+
+    // ── Schedules ─────────────────────────────────────────────────────
+    document.getElementById('scheduleInterval').addEventListener('change', function () {
+      document.getElementById('cronField').style.display = this.value === 'custom' ? 'block' : 'none';
+    });
+
+    async function createSchedule() {
+      const src = document.getElementById('schedSource').value.trim().split(':');
+      const tgt = document.getElementById('schedTarget').value.trim().split(':');
+      if (src.length < 2 || tgt.length < 2) { showToast('Use format provider:owner/repo', 'error'); return; }
+      const interval = document.getElementById('scheduleInterval').value;
+      const cron = document.getElementById('scheduleCron').value.trim();
+      const payload = {
+        interval_minutes: interval === 'custom' ? 60 : parseInt(interval),
+        cron: (interval === 'custom' && cron) ? cron : null,
+        migration_payload: {
+          source_provider: src[0], source_repo: src[1],
+          source_token: document.getElementById('schedSourceToken').value,
+          target_provider: tgt[0], target_repo: tgt[1],
+          target_token: document.getElementById('schedTargetToken').value,
+          options: { repository: true, branches: true, tags: true },
+        }
+      };
+      try {
+        const r = await fetch(`${API}/api/schedule`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error);
+        showToast('Schedule created!', 'success');
+        loadSchedules();
+      } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function loadSchedules() {
+      try {
+        const r = await fetch(`${API}/api/schedule`);
+        const data = await r.json();
+        const list = document.getElementById('scheduleList');
+        if (!data.schedules || !data.schedules.length) {
+          list.innerHTML = '<div class="history-empty">No active schedules</div>';
+          return;
+        }
+        list.innerHTML = data.schedules.map(s => `
+      <div class="schedule-item">
+        <div>
+          <div style="font-size:13px;font-weight:500">${s.payload?.source_provider || 'source'} → ${s.payload?.target_provider || 'target'}</div>
+          <div class="text-muted mt-8">Every ${s.interval_minutes} min${s.cron ? ` · cron: ${s.cron}` : ''}</div>
+          ${s.last_run ? `<div class="text-muted">Last run: ${new Date(s.last_run).toLocaleString()}</div>` : ''}
+        </div>
+        <button class="btn btn-danger" onclick="deleteSchedule('${s.id}')">✕ Remove</button>
+      </div>
+    `).join('');
+      } catch (e) { /* ignore */ }
+    }
+
+    async function deleteSchedule(id) {
+      await fetch(`${API}/api/schedule/${id}`, { method: 'DELETE' });
+      showToast('Schedule removed', 'success');
+      loadSchedules();
+    }
+
+    // ── History ───────────────────────────────────────────────────────
+    async function loadHistory() {
+      try {
+        const r = await fetch(`${API}/api/history`);
+        const data = await r.json();
+        const list = document.getElementById('historyList');
+        if (!data.history || !data.history.length) {
+          list.innerHTML = '<div class="history-empty">No migrations yet. Start your first migration!</div>';
+          return;
+        }
+        list.innerHTML = data.history.map(h => `
+      <div class="history-item">
+        <div class="history-badge ${h.status}">${h.status === 'completed' ? '✓ Completed' : '✕ Failed'}</div>
+        <div class="history-info">
+          <div class="history-route">${h.source_provider} / ${h.source_repo} → ${h.target_provider} / ${h.target_repo}</div>
+          <div class="history-time">${new Date(h.created_at).toLocaleString()}</div>
+        </div>
+      </div>
+    `).join('');
+      } catch (e) { /* ignore */ }
+    }
+
+    // ── Toast ─────────────────────────────────────────────────────────
+    function showToast(msg, type = '') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = `show ${type}`;
+      setTimeout(() => t.className = '', 3500);
+    }
+
+    // Close repo lists on outside click
+    document.addEventListener('click', e => {
+      ['source', 'target'].forEach(side => {
+        const list = document.getElementById(`${side}RepoList`);
+        const input = document.getElementById(`${side}Repo`);
+        if (!list.contains(e.target) && e.target !== input && !e.target.closest('.input-with-btn')) {
+          list.style.display = 'none';
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>
