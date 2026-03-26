@@ -1,4 +1,4 @@
-# VCS Migrator Pro ⚡
+# Git Migrator Tool ⚡
 
 A comprehensive web application to migrate complete VCS systems between providers — **GitHub ↔ GitLab ↔ Bitbucket** — with support for full sync, scheduled sync, and selective migration of branches, tags, issues, PRs, and collaborators.
 
@@ -91,7 +91,6 @@ User → POST /api/migrate
 cd backend
 pip install -r requirements.txt
 python app.py
-# Server runs on http://localhost:5000
 ```
 
 ### Frontend
@@ -101,7 +100,6 @@ The frontend is a static HTML file — open directly or serve with any web serve
 ```bash
 cd frontend
 python -m http.server 8080
-# Visit http://localhost:8080
 ```
 
 Or use VS Code Live Server.
