@@ -2,7 +2,7 @@
 
 A comprehensive web application to migrate complete VCS systems between providers — **GitHub ↔ GitLab ↔ Bitbucket** — with support for full sync, scheduled sync, and selective migration of branches, tags, issues, PRs, and collaborators.
 
-🚀 **Live Demo**: [https://git-migrator-tool.vercel.app](https://git-migrator-tool.vercel.app)
+🚀 **Live Demo**: [https://git-migrator-tool.vercel.app](https://git-migrator-tool-ai7q.vercel.app/)
 
 ---
 
