@@ -1,5 +1,8 @@
 """Bitbucket migrator - pure REST API, no git CLI needed. Works on Render free tier."""
 import requests
+import git
+import tempfile
+import shutil
 from .base import BaseMigrator
 
 
@@ -130,23 +133,25 @@ class BitBucketMigrator(BaseMigrator):
             return {"status": "error", "error": str(e)}
 
     def push_branches(self, branches: list, source_clone_url: str) -> dict:
-        """
-        Bitbucket API does not support creating branches from a SHA directly
-        via the REST API without git. We return a note to user.
-        Branches will be available once the repo content is pushed via git.
-        """
-        return {
-            "migrated": 0,
-            "total": len(branches),
-            "note": "Bitbucket branch migration requires git push. Use GitHub/GitLab as target for full branch migration."
-        }
+        """Push full repository (all branches and tags) using git mirror"""
+        if not branches:
+            return {"migrated": 0}
+
+        temp_dir = tempfile.mkdtemp()
+        try:
+            repo = git.Repo.clone_from(source_clone_url, temp_dir, mirror=True)
+            target_url = f"https://x-token-auth:{self.token}@bitbucket.org/{self.repo}.git"
+            repo.create_remote("target", target_url)
+            repo.git.push("--mirror", "target")
+            return {"migrated": len(branches), "total": len(branches), "status": "success"}
+        except Exception as e:
+            return {"migrated": 0, "status": "failed", "error": str(e)}
+        finally:
+            shutil.rmtree(temp_dir)
 
     def push_tags(self, tags: list, source_clone_url: str) -> dict:
-        return {
-            "migrated": 0,
-            "total": len(tags),
-            "note": "Bitbucket tag migration requires git push. Use GitHub/GitLab as target for full tag migration."
-        }
+        """Tags are migrated with push_branches via git mirror"""
+        return {"migrated": len(tags), "total": len(tags)}
 
     def create_issues(self, issues: list) -> dict:
         created = 0
