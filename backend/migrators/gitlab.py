@@ -125,32 +125,59 @@ class GitLabMigrator(BaseMigrator):
         except Exception as e:
             return {"status": "error", "error": str(e)}
 
-    def push_branches(self, branches: list, source_clone_url: str) -> dict:
-        """Migrate branches via GitLab API - no git CLI needed."""
-        if not branches:
-            return {"migrated": 0}
-        migrated = 0
-        errors = []
-        for branch in branches:
-            try:
-                name = branch["name"]
-                sha = branch["sha"]
-                try:
-                    # Try to create branch
-                    self._post(f"/projects/{self.encoded}/repository/branches", {
-                        "branch": name,
-                        "ref": sha,
-                    })
-                except Exception:
-                    # Branch exists - update via protected branch or just skip
-                    pass
-                migrated += 1
-            except Exception as e:
-                errors.append(f"{branch['name']}: {str(e)[:120]}")
-        result = {"migrated": migrated, "total": len(branches)}
-        if errors:
-            result["errors"] = errors
-        return result
+    import git
+import tempfile
+import shutil
+
+def push_branches(self, branches: list, source_clone_url: str) -> dict:
+    """Push full repository using git mirror"""
+
+    temp_dir = tempfile.mkdtemp()
+
+    try:
+        print("Cloning source repository...")
+
+        repo = git.Repo.clone_from(
+            source_clone_url,
+            temp_dir,
+            mirror=True
+        )
+
+        print("Clone successful")
+
+        target_url = (
+            f"https://{self.token}"
+            f"@github.com/{self.repo}.git"
+        )
+
+        print("Adding target remote...")
+
+        repo.create_remote(
+            "target",
+            target_url
+        )
+
+        print("Pushing all branches and commits...")
+
+        repo.git.push("--mirror", "target")
+
+        print("Push completed")
+
+        return {
+            "status": "success",
+            "message": "Repository fully migrated"
+        }
+
+    except Exception as e:
+        print("Migration error:", str(e))
+
+        return {
+            "status": "failed",
+            "error": str(e)
+        }
+
+    finally:
+        shutil.rmtree(temp_dir)
 
     def push_tags(self, tags: list, source_clone_url: str) -> dict:
         """Migrate tags via GitLab API - no git CLI needed."""
