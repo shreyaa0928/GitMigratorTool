@@ -1,7 +1,5 @@
-"""Bitbucket migrator using Bitbucket Cloud REST API 2.0."""
+"""Bitbucket migrator - pure REST API, no git CLI needed. Works on Render free tier."""
 import requests
-import subprocess
-import tempfile
 from .base import BaseMigrator
 
 
@@ -11,7 +9,6 @@ class BitBucketMigrator(BaseMigrator):
     def __init__(self, token: str, repo: str):
         super().__init__(token, repo)
         self.session = requests.Session()
-        # Bitbucket uses App Password or OAuth token
         self.session.headers.update({
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
@@ -39,16 +36,17 @@ class BitBucketMigrator(BaseMigrator):
             data = r.json()
             results.extend(data.get("values", []))
             url = data.get("next")
-            params = None  # Only use params for first request
+            params = None
         return results
 
     def list_repositories(self) -> list:
         try:
             user = self._get("/user")
-            workspace = user.get("account_id", "")
+            workspace = user.get("username") or self._workspace
         except Exception:
             workspace = self._workspace
-        repos = self._paginate(f"/repositories/{workspace}", params={"pagelen": 100, "sort": "-updated_on"})
+        repos = self._paginate(f"/repositories/{workspace}",
+                               params={"pagelen": 100, "sort": "-updated_on"})
         return [{
             "name": r["name"],
             "full_name": r["full_name"],
@@ -95,7 +93,8 @@ class BitBucketMigrator(BaseMigrator):
 
     def get_pull_requests(self) -> list:
         try:
-            data = self._paginate(f"/repositories/{self.repo}/pullrequests", params={"pagelen": 100, "state": "ALL"})
+            data = self._paginate(f"/repositories/{self.repo}/pullrequests",
+                                  params={"pagelen": 100, "state": "ALL"})
             return [{
                 "title": pr["title"],
                 "body": pr.get("description", ""),
@@ -109,41 +108,45 @@ class BitBucketMigrator(BaseMigrator):
     def get_collaborators(self) -> list:
         try:
             data = self._get(f"/repositories/{self.repo}/permissions-config/users")
-            return [{"login": u["user"]["account_id"], "permission": u.get("permission", "read")} for u in data.get("values", [])]
+            return [{"login": u["user"]["account_id"], "permission": u.get("permission", "read")}
+                    for u in data.get("values", [])]
         except Exception:
             return []
 
     def create_repository(self, info: dict) -> dict:
         workspace = self._workspace or "me"
         slug = info["name"].lower().replace(" ", "-")
-        data = self._post(f"/repositories/{workspace}/{slug}", {
-            "scm": "git",
-            "name": info["name"],
-            "description": info.get("description", ""),
-            "is_private": info.get("private", False),
-        })
-        self.repo = data["full_name"]
-        self.clone_url = f"https://x-token-auth:{self.token}@bitbucket.org/{self.repo}.git"
-        return {"status": "created", "url": data["links"]["html"]["href"]}
+        try:
+            data = self._post(f"/repositories/{workspace}/{slug}", {
+                "scm": "git",
+                "name": info["name"],
+                "description": info.get("description", ""),
+                "is_private": info.get("private", False),
+            })
+            self.repo = data["full_name"]
+            self.clone_url = f"https://x-token-auth:{self.token}@bitbucket.org/{self.repo}.git"
+            return {"status": "created", "url": data["links"]["html"]["href"]}
+        except Exception as e:
+            return {"status": "error", "error": str(e)}
 
     def push_branches(self, branches: list, source_clone_url: str) -> dict:
-        if not branches:
-            return {"migrated": 0}
-        with tempfile.TemporaryDirectory() as tmpdir:
-            subprocess.run(["git", "clone", "--mirror", source_clone_url, tmpdir], check=True, capture_output=True)
-            subprocess.run(["git", "remote", "set-url", "origin", self.clone_url], cwd=tmpdir, check=True, capture_output=True)
-            refs = [f"refs/heads/{b['name']}:refs/heads/{b['name']}" for b in branches]
-            subprocess.run(["git", "push", "origin", "--force"] + refs, cwd=tmpdir, check=True, capture_output=True)
-        return {"migrated": len(branches)}
+        """
+        Bitbucket API does not support creating branches from a SHA directly
+        via the REST API without git. We return a note to user.
+        Branches will be available once the repo content is pushed via git.
+        """
+        return {
+            "migrated": 0,
+            "total": len(branches),
+            "note": "Bitbucket branch migration requires git push. Use GitHub/GitLab as target for full branch migration."
+        }
 
     def push_tags(self, tags: list, source_clone_url: str) -> dict:
-        if not tags:
-            return {"migrated": 0}
-        with tempfile.TemporaryDirectory() as tmpdir:
-            subprocess.run(["git", "clone", "--mirror", source_clone_url, tmpdir], check=True, capture_output=True)
-            subprocess.run(["git", "remote", "set-url", "origin", self.clone_url], cwd=tmpdir, check=True, capture_output=True)
-            subprocess.run(["git", "push", "origin", "--tags", "--force"], cwd=tmpdir, check=True, capture_output=True)
-        return {"migrated": len(tags)}
+        return {
+            "migrated": 0,
+            "total": len(tags),
+            "note": "Bitbucket tag migration requires git push. Use GitHub/GitLab as target for full tag migration."
+        }
 
     def create_issues(self, issues: list) -> dict:
         created = 0
@@ -174,4 +177,8 @@ class BitBucketMigrator(BaseMigrator):
         return {"migrated": created, "total": len(prs)}
 
     def add_collaborators(self, users: list) -> dict:
-        return {"migrated": 0, "total": len(users), "note": "Bitbucket team permissions require workspace admin"}
+        return {
+            "migrated": 0,
+            "total": len(users),
+            "note": "Bitbucket team permissions require workspace admin access."
+        }
