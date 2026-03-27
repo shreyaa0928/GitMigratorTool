@@ -1263,6 +1263,7 @@
       setStatus('queued', 'Queued', 'Submitting migration job...', 0);
 
       try {
+        console.log("MIGRATE BUTTON CLICKED");
         const r = await fetch(`${API}/api/migrate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
