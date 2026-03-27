@@ -4,8 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Git Migrator Tool
-  </title>
+  <title>Git Migrator Tool</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap"
@@ -433,6 +432,7 @@
       cursor: pointer;
       transition: all var(--transition);
       user-select: none;
+      display: block;
     }
 
     .option-card:hover {
@@ -445,7 +445,11 @@
     }
 
     .option-card input[type="checkbox"] {
-      display: none;
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+      pointer-events: none;
     }
 
     .option-label {
@@ -861,7 +865,7 @@
       <div class="logo">
         <div class="logo-icon">⚡</div>
         <div>
-          Git Migrator Tool
+          VCS Migrator Pro
           <div class="logo-sub">GitHub · GitLab · Bitbucket</div>
         </div>
       </div>
@@ -950,50 +954,51 @@
       <div class="card">
         <div class="card-title"><span class="icon">⚙️</span> What to Migrate</div>
         <div class="options-grid" id="optionsGrid">
-          <label class="option-card checked" onclick="toggleOption(this,'repository')">
-            <input type="checkbox" name="opt" value="repository" checked>
+          <label class="option-card checked">
+            <input type="checkbox" name="opt" value="repository" checked onchange="toggleOption(this,'repository')">
             <div class="option-label">
               <div class="option-check">✓</div>
               📁 Repository
             </div>
           </label>
-          <label class="option-card checked" onclick="toggleOption(this,'branches')">
-            <input type="checkbox" name="opt" value="branches" checked>
+          <label class="option-card checked">
+            <input type="checkbox" name="opt" value="branches" checked onchange="toggleOption(this,'branches')">
             <div class="option-label">
               <div class="option-check">✓</div>
               🌿 All Branches
             </div>
           </label>
-          <label class="option-card" onclick="toggleOption(this,'specific_branches')">
-            <input type="checkbox" name="opt" value="specific_branches">
+          <label class="option-card">
+            <input type="checkbox" name="opt" value="specific_branches"
+              onchange="toggleOption(this,'specific_branches')">
             <div class="option-label">
               <div class="option-check"></div>
               🌿 Specific Branches
             </div>
           </label>
-          <label class="option-card checked" onclick="toggleOption(this,'tags')">
-            <input type="checkbox" name="opt" value="tags" checked>
+          <label class="option-card checked">
+            <input type="checkbox" name="opt" value="tags" checked onchange="toggleOption(this,'tags')">
             <div class="option-label">
               <div class="option-check">✓</div>
               🏷️ Tags
             </div>
           </label>
-          <label class="option-card" onclick="toggleOption(this,'issues')">
-            <input type="checkbox" name="opt" value="issues">
+          <label class="option-card">
+            <input type="checkbox" name="opt" value="issues" onchange="toggleOption(this,'issues')">
             <div class="option-label">
               <div class="option-check"></div>
               🐛 Issues
             </div>
           </label>
-          <label class="option-card" onclick="toggleOption(this,'pull_requests')">
-            <input type="checkbox" name="opt" value="pull_requests">
+          <label class="option-card">
+            <input type="checkbox" name="opt" value="pull_requests" onchange="toggleOption(this,'pull_requests')">
             <div class="option-label">
               <div class="option-check"></div>
               🔀 Pull Requests
             </div>
           </label>
-          <label class="option-card" onclick="toggleOption(this,'users')">
-            <input type="checkbox" name="opt" value="users">
+          <label class="option-card">
+            <input type="checkbox" name="opt" value="users" onchange="toggleOption(this,'users')">
             <div class="option-label">
               <div class="option-check"></div>
               👥 Collaborators
@@ -1105,6 +1110,9 @@
   <div id="toast"></div>
 
   <script>
+    // ✅ FIX: Change this to your actual backend URL when deployed
+    // For local testing: 'http://localhost:5000'
+    // For Render deployment: 'https://YOUR-APP-NAME.onrender.com'
     const API = 'https://gitmigratortool.onrender.com';
     let currentJobId = null;
     let pollInterval = null;
@@ -1182,14 +1190,18 @@
     }
 
     // ── Options toggle ────────────────────────────────────────────────
-    function toggleOption(card, value) {
-      card.classList.toggle('checked');
-      const cb = card.querySelector('input');
-      cb.checked = card.classList.contains('checked');
+    function toggleOption(input, value) {
+      const card = input.closest('.option-card');
       const check = card.querySelector('.option-check');
-      check.textContent = cb.checked ? '✓' : '';
+      if (input.checked) {
+        card.classList.add('checked');
+        check.textContent = '✓';
+      } else {
+        card.classList.remove('checked');
+        check.textContent = '';
+      }
       if (value === 'specific_branches') {
-        document.getElementById('specificBranchesField').style.display = cb.checked ? 'block' : 'none';
+        document.getElementById('specificBranchesField').style.display = input.checked ? 'block' : 'none';
       }
     }
 
