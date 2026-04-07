@@ -137,21 +137,35 @@ class GitLabMigrator(BaseMigrator):
                 "issues_enabled": info.get("has_issues", True),
             }
 
-            # If we have a namespace, we need to find its ID
+            # Improved Namespace Lookup
             if namespace_path:
                 try:
+                    # Try direct namespace first
                     ns_data = self._get(f"/namespaces/{quote(namespace_path, safe='')}")
                     payload["namespace_id"] = ns_data["id"]
                 except Exception:
-                    # Fallback to name-only if namespace not found
-                    pass
+                    try:
+                        # Search in groups if direct failed
+                        groups = self._get(f"/groups?search={quote(namespace_path)}")
+                        if groups and groups[0]["full_path"].lower() == namespace_path.lower():
+                            payload["namespace_id"] = groups[0]["id"]
+                    except Exception:
+                        pass
 
             try:
                 data = self._post("/projects", payload)
             except Exception as e:
-                # If project already exists, try to fetch it
+                # If project already exists, we must find its REAL path to push to it
                 if "already exists" in str(e).lower() or "has already been taken" in str(e).lower():
-                    data = self._get(f"/projects/{quote(self.repo, safe='')}")
+                    # Search by name in user's projects to get the correct path_with_namespace
+                    try:
+                        search = self._get(f"/projects?search={quote(repo_name)}&membership=True")
+                        # Pick the one that matches intended name
+                        match = next((p for p in search if p["name"].lower() == repo_name.lower()), search[0])
+                        data = match
+                    except Exception:
+                        # Final fallback: try the path we have
+                        data = self._get(f"/projects/{quote(self.repo, safe='')}")
                 else:
                     raise e
 
