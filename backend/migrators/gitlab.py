@@ -18,8 +18,8 @@ class GitLabMigrator(BaseMigrator):
             "Content-Type": "application/json",
         })
         if repo:
-            self.encoded = quote(repo, safe="")
-            self.clone_url = f"https://oauth2:{token}@gitlab.com/{repo}.git"
+            self.encoded = quote(self.repo, safe="")
+            self.clone_url = f"https://oauth2:{token}@gitlab.com/{self.repo}.git"
 
     def _get(self, path, params=None):
         r = self.session.get(f"{self.BASE}{path}", params=params)
@@ -172,7 +172,8 @@ class GitLabMigrator(BaseMigrator):
 
             return {
                 "status": "failed",
-                "error": str(e)
+                "error": str(e),
+                "migrated": 0
             }
 
         finally:

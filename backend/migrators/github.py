@@ -19,7 +19,7 @@ class GitHubMigrator(BaseMigrator):
             "X-GitHub-Api-Version": "2022-11-28",
         })
         if repo:
-            self.clone_url = f"https://{token}@github.com/{repo}.git"
+            self.clone_url = f"https://{token}@github.com/{self.repo}.git"
 
     def _get(self, path, params=None):
         r = self.session.get(f"{self.BASE}{path}", params=params)

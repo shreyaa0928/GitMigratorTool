@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 class BaseMigrator(ABC):
     def __init__(self, token: str, repo: str):
         self.token = token
-        self.repo = repo
+        self.repo = repo[:-4] if repo and repo.endswith(".git") else repo
         self.clone_url = ""
 
     @abstractmethod

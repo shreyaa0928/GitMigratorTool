@@ -17,8 +17,8 @@ class BitBucketMigrator(BaseMigrator):
             "Content-Type": "application/json",
         })
         if repo:
-            self.clone_url = f"https://x-token-auth:{token}@bitbucket.org/{repo}.git"
-        self._workspace = repo.split("/")[0] if "/" in repo else ""
+            self.clone_url = f"https://x-token-auth:{token}@bitbucket.org/{self.repo}.git"
+        self._workspace = self.repo.split("/")[0] if "/" in self.repo else ""
 
     def _get(self, path, params=None):
         r = self.session.get(f"{self.BASE}{path}", params=params)
