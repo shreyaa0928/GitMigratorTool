@@ -136,11 +136,19 @@ class GitLabMigrator(BaseMigrator):
                     # Fallback to name-only if namespace not found
                     pass
 
-            data = self._post("/projects", payload)
+            try:
+                data = self._post("/projects", payload)
+            except Exception as e:
+                # If project already exists, try to fetch it
+                if "already exists" in str(e).lower() or "has already been taken" in str(e).lower():
+                    data = self._get(f"/projects/{quote(self.repo, safe='')}")
+                else:
+                    raise e
+
             self.repo = data["path_with_namespace"]
             self.encoded = quote(self.repo, safe="")
             self.clone_url = f"https://oauth2:{self.token}@gitlab.com/{self.repo}.git"
-            return {"status": "created", "url": data["web_url"]}
+            return {"status": "created" if "id" in data else "exists", "url": data["web_url"]}
         except Exception as e:
             return {"status": "error", "error": str(e)}
 
