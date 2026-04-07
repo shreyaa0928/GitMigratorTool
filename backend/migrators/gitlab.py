@@ -114,13 +114,29 @@ class GitLabMigrator(BaseMigrator):
 
     def create_repository(self, info: dict) -> dict:
         try:
-            data = self._post("/projects", {
-                "name": info["name"],
+            # If self.repo has a slash, it's 'namespace/name'
+            path_parts = self.repo.split("/")
+            repo_name = path_parts[-1]
+            namespace_path = "/".join(path_parts[:-1]) if len(path_parts) > 1 else None
+
+            payload = {
+                "name": repo_name,
                 "description": info.get("description", ""),
                 "visibility": "private" if info.get("private") else "public",
                 "initialize_with_readme": False,
                 "issues_enabled": info.get("has_issues", True),
-            })
+            }
+
+            # If we have a namespace, we need to find its ID
+            if namespace_path:
+                try:
+                    ns_data = self._get(f"/namespaces/{quote(namespace_path, safe='')}")
+                    payload["namespace_id"] = ns_data["id"]
+                except Exception:
+                    # Fallback to name-only if namespace not found
+                    pass
+
+            data = self._post("/projects", payload)
             self.repo = data["path_with_namespace"]
             self.encoded = quote(self.repo, safe="")
             self.clone_url = f"https://oauth2:{self.token}@gitlab.com/{self.repo}.git"
@@ -130,41 +146,25 @@ class GitLabMigrator(BaseMigrator):
 
     def push_branches(self, branches: list, source_clone_url: str) -> dict:
         """Push full repository using git mirror"""
-
         temp_dir = tempfile.mkdtemp()
-
         try:
-            print("Cloning source repository...")
-
             repo = git.Repo.clone_from(
                 source_clone_url,
                 temp_dir,
                 mirror=True
             )
-
-            print("Clone successful")
-
             target_url = (
                 f"https://oauth2:{self.token}"
                 f"@gitlab.com/{self.repo}.git"
             )
-
-            print("Adding target remote...")
-
-            repo.create_remote(
-                "target",
-                target_url
-            )
-
-            print("Pushing all branches and commits...")
-
+            repo.create_remote("target", target_url)
             repo.git.push("--mirror", "target")
-
-            print("Push completed")
-
+            
             return {
                 "status": "success",
-                "message": "Repository fully migrated"
+                "message": "Repository fully migrated",
+                "migrated": len(branches),
+                "total": len(branches)
             }
 
         except Exception as e:
