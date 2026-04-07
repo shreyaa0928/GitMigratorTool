@@ -133,21 +133,45 @@ class BitBucketMigrator(BaseMigrator):
             return {"status": "error", "error": str(e)}
 
     def push_branches(self, branches: list, source_clone_url: str) -> dict:
-        """Push full repository (all branches and tags) using git mirror"""
-        if not branches:
-            return {"migrated": 0}
+        """Push full repository using git mirror with direct subprocess"""
+        import subprocess
+        import tempfile
+        import shutil
+        import os
 
         temp_dir = tempfile.mkdtemp()
         try:
-            repo = git.Repo.clone_from(source_clone_url, temp_dir, mirror=True)
+            # Step 1: Clone source
+            clone_cmd = ["git", "clone", "--mirror", source_clone_url, temp_dir]
+            subprocess.run(clone_cmd, check=True, capture_output=True)
+
+            # Step 2: Prepare target URL
             target_url = f"https://x-token-auth:{self.token}@bitbucket.org/{self.repo}.git"
-            repo.create_remote("target", target_url)
-            repo.git.push("--mirror", "target")
-            return {"migrated": len(branches), "total": len(branches), "status": "success"}
+            
+            # Step 3: Force push mirror
+            push_cmd = ["git", "push", "--mirror", "--force", target_url]
+            process = subprocess.run(push_cmd, cwd=temp_dir, capture_output=True, text=True)
+            
+            if process.returncode != 0:
+                raise Exception(f"Git push failed: {process.stderr}")
+
+            return {
+                "status": "success",
+                "message": "Repository fully migrated",
+                "migrated": len(branches) or 1,
+                "total": len(branches) or 1
+            }
         except Exception as e:
-            return {"migrated": 0, "status": "failed", "error": str(e)}
+            return {
+                "status": "failed",
+                "error": str(e),
+                "migrated": 0
+            }
         finally:
-            shutil.rmtree(temp_dir)
+            try:
+                shutil.rmtree(temp_dir)
+            except Exception:
+                pass
 
     def push_tags(self, tags: list, source_clone_url: str) -> dict:
         """Tags are migrated with push_branches via git mirror"""

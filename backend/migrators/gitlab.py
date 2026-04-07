@@ -21,6 +21,15 @@ class GitLabMigrator(BaseMigrator):
             self.encoded = quote(self.repo, safe="")
             self.clone_url = f"https://oauth2:{token}@gitlab.com/{self.repo}.git"
 
+    def _get_username(self):
+        if not hasattr(self, "username") or not self.username:
+            try:
+                user = self._get("/user")
+                self.username = user["username"]
+            except Exception:
+                self.username = "git" # fallback
+        return self.username
+
     def _get(self, path, params=None):
         r = self.session.get(f"{self.BASE}{path}", params=params)
         r.raise_for_status()
@@ -153,47 +162,53 @@ class GitLabMigrator(BaseMigrator):
             return {"status": "error", "error": str(e)}
 
     def push_branches(self, branches: list, source_clone_url: str) -> dict:
-        """Push full repository using git mirror"""
+        """Push full repository using git mirror with direct subprocess for maximum reliability"""
+        import subprocess
+        import tempfile
+        import shutil
+        import os
+
         temp_dir = tempfile.mkdtemp()
         try:
-            repo = git.Repo.clone_from(
-                source_clone_url,
-                temp_dir,
-                mirror=True
-            )
-            # Standard PAT format: https://username:token@gitlab.com/...
-            # Using 'oauth2' or 'git' as username is common for GitLab PATs
-            target_url = (
-                f"https://git:{self.token}"
-                f"@gitlab.com/{self.repo}.git"
-            )
-            
-            masked_target = f"https://git:***@gitlab.com/{self.repo}.git"
-            print(f"DEBUG: Mirroring to target: {masked_target}")
-            print(f"DEBUG: Source URL: {source_clone_url.split('@')[-1] if '@' in source_clone_url else source_clone_url}")
+            # Step 1: Clone source
+            print(f"DEBUG: Cloning {source_clone_url.split('@')[-1] if '@' in source_clone_url else 'source'}...")
+            clone_cmd = ["git", "clone", "--mirror", source_clone_url, temp_dir]
+            subprocess.run(clone_cmd, check=True, capture_output=True)
 
-            repo.create_remote("target", target_url)
-            print("DEBUG: Executing git push --mirror --force...")
-            repo.git.push("target", "--mirror", "--force")
-            print("DEBUG: Push operation returned successfully.")
+            # Step 2: Prepare target URL with detected username
+            username = self._get_username()
+            target_url = f"https://{username}:{self.token}@gitlab.com/{self.repo}.git"
+            
+            # Step 3: Force push mirror
+            print(f"DEBUG: Force mirroring to GitLab as user {username}...")
+            # We use --mirror and --force to overwrite EVERYTHING including that 1hr old readme
+            push_cmd = ["git", "push", "--mirror", "--force", target_url]
+            process = subprocess.run(push_cmd, cwd=temp_dir, capture_output=True, text=True)
+            
+            if process.returncode != 0:
+                print(f"DEBUG: Push failed! Error: {process.stderr}")
+                raise Exception(f"Git push failed: {process.stderr}")
+
+            print("DEBUG: Push completed successfully! All branches and tags mirrored.")
             return {
                 "status": "success",
-                "message": "Repository fully migrated",
-                "migrated": len(branches),
-                "total": len(branches)
+                "message": "Repository fully mirrored (overwritten)",
+                "migrated": len(branches) or 1, # fallback to 1 if mirror worked but list was empty
+                "total": len(branches) or 1
             }
-
         except Exception as e:
-            print("Migration error:", str(e))
-
+            print(f"DEBUG: Migration exception: {str(e)}")
             return {
                 "status": "failed",
                 "error": str(e),
                 "migrated": 0
             }
-
         finally:
-            shutil.rmtree(temp_dir)
+            # Cleanup
+            try:
+                shutil.rmtree(temp_dir)
+            except Exception:
+                pass
 
     def push_tags(self, tags: list, source_clone_url: str) -> dict:
         """Migrate tags via GitLab API - no git CLI needed."""
