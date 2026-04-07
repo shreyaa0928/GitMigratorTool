@@ -1111,29 +1111,42 @@
 
   <script>
     // ✅ UNIVERSAL CONNECTOR: Detects local vs deployed automatically
-    let API = 'http://localhost:5001';
+    let API = 'http://127.0.0.1:5000';
     const DEPLOYED_URL = 'https://gitmigratortool.onrender.com';
     let currentJobId = null;
     let pollInterval = null;
     const branchTags = [];
 
     async function checkHealth() {
-      const targets = ['http://localhost:5001', 'http://localhost:5000', DEPLOYED_URL];
+      // SECURITY CHECK: If user is on HTTPS (Vercel), they can't talk to local HTTP
+      const isHttps = window.location.protocol === 'https:';
+      const isLocalFile = window.location.protocol === 'file:';
+
+      const targets = ['http://127.0.0.1:5000', 'http://localhost:5000', 'http://127.0.0.1:5001', DEPLOYED_URL];
       const badge = document.getElementById('healthBadge');
 
       for (const url of targets) {
+        // Skip local targets if we're on a secure deployment (blocked by browser)
+        if (isHttps && url.includes('http://') && !window.location.hostname.includes('localhost')) continue;
+
         try {
-          const r = await fetch(`${url}/api/health`, { signal: AbortSignal.timeout(2000) });
+          const r = await fetch(`${url}/api/health`, { signal: AbortSignal.timeout(1500) });
           if (r.ok) {
             API = url;
-            const isLocal = url.includes('localhost');
+            const isLocal = url.includes('127.0.0.1') || url.includes('localhost');
             badge.textContent = `● API Online (${isLocal ? url.split(':').pop() : 'Cloud'})`;
             badge.className = 'badge online';
             return;
           }
         } catch (e) { }
       }
-      badge.textContent = 'API Offline - Run python app.py';
+
+      if (isHttps && !window.location.hostname.includes('localhost')) {
+        badge.textContent = 'Demo Mode: Local Backend Blocked by HTTPS';
+        badge.title = "Open index.html locally for full functionality.";
+      } else {
+        badge.textContent = 'API Offline - Run python app.py';
+      }
       badge.className = 'badge offline';
     }
 

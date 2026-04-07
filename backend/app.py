@@ -11,7 +11,7 @@ from scheduler import MigrationScheduler
 from db import MigrationDB
  
 app = Flask(__name__)
-CORS(app) # Open completely for demo reliability
+CORS(app, resources={r"/*": {"origins": "*"}}) 
  
 db = MigrationDB()
 scheduler = MigrationScheduler(db)
@@ -188,7 +188,7 @@ def migration_history():
  
  
 if __name__ == "__main__":
-    port = 5001 # Switched to 5001 to avoid Windows service conflicts
+    port = 5000
     scheduler.start()
-    print(f"!!! INTERNSHIP-SAVER STARTING ON PORT {port} !!!")
-    app.run(host="0.0.0.0", port=port, debug=False)
+    print(f"!!! UNIVERSAL GIT MIGRATOR STARTING ON PORT {port} !!!")
+    app.run(host="127.0.0.1", port=port, debug=False)
