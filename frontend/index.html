@@ -1358,7 +1358,7 @@
           source_token: document.getElementById('schedSourceToken').value,
           target_provider: tgt[0], target_repo: tgt[1],
           target_token: document.getElementById('schedTargetToken').value,
-          options: { repository: true, branches: true, tags: true },
+          options: getOptions(),
         }
       };
       try {
