@@ -161,31 +161,35 @@ class GitHubMigrator(BaseMigrator):
     # ── Write to target ──────────────────────────────────────────────
 
     def create_repository(self, info: dict) -> dict:
-        """Create repo on target. Uses auto_init=True so we get an initial commit,
-        which allows us to create branches/tags via the refs API."""
+        # Use target name from self.repo if available (e.g. 'owner/repo' or 'repo')
+        repo_parts = self.repo.split("/")
+        target_name = repo_parts[-1] if self.repo else info["name"]
+        org = repo_parts[0] if self.repo and len(repo_parts) > 1 else None
+
         try:
-            existing = self._get(f"/repos/{self.repo}")
+            # Check if it already exists at the target path
+            try:
+                full_path = self.repo if "/" in self.repo else f"{info.get('owner', 'me')}/{target_name}"
+                existing = self._get(f"/repos/{full_path}")
+                self.repo = existing["full_name"]
+                self.clone_url = f"https://{self.token}@github.com/{self.repo}.git"
+                return {"status": "exists", "url": existing["html_url"]}
+            except Exception:
+                pass
+
+            # Create new repo (empty to allow mirror push)
+            path = f"/orgs/{org}/repos" if org else "/user/repos"
+            r = self._post(path, {
+                "name": target_name,
+                "description": info.get("description", ""),
+                "private": info.get("private", False),
+                "auto_init": False, # Essential for clean mirror push
+            })
+            self.repo = r["full_name"]
             self.clone_url = f"https://{self.token}@github.com/{self.repo}.git"
-            return {"status": "exists", "url": existing["html_url"]}
-        except Exception:
-            pass
-
-        user = self._get("/user")
-        owner = user["login"]
-        repo_name = info["name"]
-
-        payload = {
-            "name": repo_name,
-            "description": info.get("description", ""),
-            "private": info.get("private", False),
-            "auto_init": True,          # ← KEY FIX: creates initial commit so refs API works
-            "has_issues": info.get("has_issues", True),
-            "has_wiki": info.get("has_wiki", False),
-        }
-        r = self._post("/user/repos", payload)
-        self.repo = f"{owner}/{repo_name}"
-        self.clone_url = f"https://{self.token}@github.com/{self.repo}.git"
-        return {"status": "created", "url": r["html_url"]}
+            return {"status": "created", "url": r["html_url"]}
+        except Exception as e:
+            return {"status": "error", "error": str(e)}
 
     def push_branches(self, branches: list, source_clone_url: str) -> dict:
         """Push full repository using git mirror with detailed file-based logging for diagnostics"""
