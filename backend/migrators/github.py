@@ -18,6 +18,7 @@ class GitHubMigrator(BaseMigrator):
             "Accept": "application/vnd.github+json",
             "X-GitHub-Api-Version": "2022-11-28",
         })
+        self.session.verify = False
         if repo:
             self.clone_url = f"https://{token}@github.com/{self.repo}.git"
 
@@ -225,10 +226,15 @@ class GitHubMigrator(BaseMigrator):
             log("Executing Hardforce Push (Manual)...")
             # Push all branches, tags, and force everything
             push_all = ["git", "push", "--all", "--force", target_url]
-            subprocess.run(push_all, cwd=temp_dir, capture_output=True, text=True, env=sys_env)
+            all_res = subprocess.run(push_all, cwd=temp_dir, capture_output=True, text=True, env=sys_env)
+            if all_res.returncode != 0:
+                log(f"Push ALL Failed: {all_res.stderr}")
+                raise Exception(f"Git push --all failed: {all_res.stderr}")
             
             push_tags = ["git", "push", "--tags", "--force", target_url]
-            subprocess.run(push_tags, cwd=temp_dir, capture_output=True, text=True, env=sys_env)
+            tag_res = subprocess.run(push_tags, cwd=temp_dir, capture_output=True, text=True, env=sys_env)
+            if tag_res.returncode != 0:
+                log(f"Push TAGS Failed: {tag_res.stderr}")
             
             log("Manual Migration Complete.")
             return {

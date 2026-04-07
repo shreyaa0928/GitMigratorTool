@@ -4,8 +4,22 @@ from abc import ABC, abstractmethod
 
 class BaseMigrator(ABC):
     def __init__(self, token: str, repo: str):
+        import urllib3
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        
+        # Clean repository path (strip browser URLs)
+        clean_repo = repo.strip()
+        if "://" in clean_repo:
+            clean_repo = clean_repo.split("://")[-1]
+        
+        # Strip common domain prefixes
+        for domain in ["github.com/", "gitlab.com/", "bitbucket.org/"]:
+            if domain in clean_repo:
+                clean_repo = clean_repo.split(domain)[-1]
+        
+        if clean_repo.endswith(".git"): clean_repo = clean_repo[:-4]
+        self.repo = clean_repo
         self.token = token
-        self.repo = repo[:-4] if repo and repo.endswith(".git") else repo
         self.clone_url = ""
 
     @abstractmethod

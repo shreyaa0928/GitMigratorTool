@@ -4,7 +4,15 @@ if __name__ == "__main__":
     print("-" * 40)
     
     source = input("Source Git URL (e.g. https://github.com/user/repo.git): ").strip()
-    target = input("Target Repo Path (e.g. user/target-repo): ").strip()
+    raw_target = input("Target Repo Path (e.g. user/target-repo): ").strip()
+    
+    # NEW: URL Parsing for Direct Fix
+    target = raw_target
+    if "://" in target: target = target.split("://")[-1]
+    for domain in ["github.com/", "gitlab.com/", "bitbucket.org/"]:
+        if domain in target: target = target.split(domain)[-1]
+    if target.endswith(".git"): target = target[:-4]
+    
     token = input("Target Provider Token: ").strip()
     provider = input("Target Provider (github/gitlab/bitbucket): ").strip().lower()
 

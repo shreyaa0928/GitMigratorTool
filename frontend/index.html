@@ -1134,7 +1134,7 @@
           if (r.ok) {
             API = url;
             const isLocal = url.includes('127.0.0.1') || url.includes('localhost');
-            badge.textContent = `● API Online (${isLocal ? url.split(':').pop() : 'Cloud'})`;
+            badge.textContent = isLocal ? `● READY FOR DEMO (PORT ${url.split(':').pop()})` : `● API Online (Cloud)`;
             badge.className = 'badge online';
             return;
           }

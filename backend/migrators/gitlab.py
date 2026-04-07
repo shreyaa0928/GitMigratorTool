@@ -18,6 +18,7 @@ class GitLabMigrator(BaseMigrator):
             "PRIVATE-TOKEN": token,
             "Content-Type": "application/json",
         })
+        self.session.verify = False
         if repo:
             self.encoded = quote(self.repo, safe="")
             self.clone_url = f"https://oauth2:{token}@gitlab.com/{self.repo}.git"
@@ -213,17 +214,22 @@ class GitLabMigrator(BaseMigrator):
             
             # Step 3: Manual Push All
             log("Executing Hardforce Push (Manual)...")
-            # Push all branches, tags, and force everything
             push_all = ["git", "push", "--all", "--force", target_url]
-            subprocess.run(push_all, cwd=temp_dir, capture_output=True, text=True, env=sys_env)
+            all_res = subprocess.run(push_all, cwd=temp_dir, capture_output=True, text=True, env=sys_env)
+            if all_res.returncode != 0:
+                log(f"Push ALL Failed: {all_res.stderr}")
+                raise Exception(f"Git push --all failed: {all_res.stderr}")
             
             push_tags = ["git", "push", "--tags", "--force", target_url]
-            subprocess.run(push_tags, cwd=temp_dir, capture_output=True, text=True, env=sys_env)
+            tag_res = subprocess.run(push_tags, cwd=temp_dir, capture_output=True, text=True, env=sys_env)
+            if tag_res.returncode != 0:
+                log(f"Push TAGS Failed: {tag_res.stderr}")
+                # Don't fail the whole job if only tags fail, but log it
             
             log("Manual Migration Complete.")
             return {
                 "status": "success",
-                "message": "Repository fully migrated (All Branches)",
+                "message": "Repository fully migrated",
                 "migrated": len(branches) or 1,
                 "total": len(branches) or 1
             }

@@ -190,5 +190,13 @@ def migration_history():
 if __name__ == "__main__":
     port = 5000
     scheduler.start()
-    print(f"!!! UNIVERSAL GIT MIGRATOR STARTING ON PORT {port} !!!")
+    print("""
+    =======================================================
+    ⚡ UNIVERSAL GIT MIGRATOR v2.0 - READY FOR DEMO ⚡
+    =======================================================
+    [STATUS] Backend: ONLINE (127.0.0.1:5000)
+    [STATUS] Scheduler: ACTIVE
+    [STATUS] Mode: HYBRID CLOUD/LOCAL
+    -------------------------------------------------------
+    """)
     app.run(host="127.0.0.1", port=port, debug=False)
