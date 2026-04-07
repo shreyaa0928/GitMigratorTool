@@ -133,28 +133,42 @@ class BitBucketMigrator(BaseMigrator):
             return {"status": "error", "error": str(e)}
 
     def push_branches(self, branches: list, source_clone_url: str) -> dict:
-        """Push full repository using git mirror with direct subprocess"""
+        """Push full repository using git mirror with detailed file-based logging for diagnostics"""
         import subprocess
         import tempfile
         import shutil
         import os
+        from datetime import datetime
+
+        log_file = "migration_debug.log"
+        def log(msg):
+            with open(log_file, "a") as f:
+                f.write(f"[{datetime.now().isoformat()}] BITBUCKET: {msg}\n")
+            print(f"DEBUG: {msg}")
 
         temp_dir = tempfile.mkdtemp()
         try:
-            # Step 1: Clone source
+            log(f"Cloning from source (URL masked)...")
             clone_cmd = ["git", "clone", "--mirror", source_clone_url, temp_dir]
-            subprocess.run(clone_cmd, check=True, capture_output=True)
+            clone_proc = subprocess.run(clone_cmd, capture_output=True, text=True)
+            if clone_proc.returncode != 0:
+                log(f"Clone Failed: {clone_proc.stderr}")
+                raise Exception(f"Source Clone Failed: {clone_proc.stderr}")
+            log("Clone Successful.")
 
-            # Step 2: Prepare target URL
             target_url = f"https://x-token-auth:{self.token}@bitbucket.org/{self.repo}.git"
+            log(f"Target Resolved: {self.repo}")
             
-            # Step 3: Force push mirror
+            log("Executing force mirror push...")
             push_cmd = ["git", "push", "--mirror", "--force", target_url]
             process = subprocess.run(push_cmd, cwd=temp_dir, capture_output=True, text=True)
             
+            log(f"Push Return Code: {process.returncode}")
             if process.returncode != 0:
+                log(f"Push Failed Error: {process.stderr}")
                 raise Exception(f"Git push failed: {process.stderr}")
 
+            log("Push Completed Successfully.")
             return {
                 "status": "success",
                 "message": "Repository fully migrated",
@@ -162,16 +176,14 @@ class BitBucketMigrator(BaseMigrator):
                 "total": len(branches) or 1
             }
         except Exception as e:
+            log(f"Final Exception: {str(e)}")
             return {
                 "status": "failed",
                 "error": str(e),
                 "migrated": 0
             }
         finally:
-            try:
-                shutil.rmtree(temp_dir)
-            except Exception:
-                pass
+            shutil.rmtree(temp_dir, ignore_errors=True)
 
     def push_tags(self, tags: list, source_clone_url: str) -> dict:
         """Tags are migrated with push_branches via git mirror"""
