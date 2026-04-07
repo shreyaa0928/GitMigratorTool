@@ -19,3 +19,28 @@
 [2026-04-07T17:24:30.049029] Manual Migration Complete.
 [2026-04-07T17:24:30.062432] --- Diagnostic End ---
 
+[2026-04-07T17:50:11.609988] Cloning from source (Manual Mode)...
+[2026-04-07T17:50:13.709996] Source Clone Successful.
+[2026-04-07T17:50:13.711696] Resolved Target: shreyaa0928/portfolio_clone
+[2026-04-07T17:50:13.713381] Executing Hardforce Push (Manual)...
+[2026-04-07T17:50:18.061295] Push ALL Failed: remote: GitLab: You are not allowed to force push code to a protected branch on this project.
+To https://gitlab.com/shreyaa0928/portfolio_clone.git
+ ! [remote rejected] main -> main (pre-receive hook declined)
+error: failed to push some refs to 'https://gitlab.com/shreyaa0928/portfolio_clone.git'
+
+[2026-04-07T17:50:18.063383] Final Exception: Git push --all failed: remote: GitLab: You are not allowed to force push code to a protected branch on this project.
+To https://gitlab.com/shreyaa0928/portfolio_clone.git
+ ! [remote rejected] main -> main (pre-receive hook declined)
+error: failed to push some refs to 'https://gitlab.com/shreyaa0928/portfolio_clone.git'
+
+[2026-04-07T17:50:18.099049] --- Diagnostic End ---
+
+[2026-04-07T17:54:33.133367] Cloning from source (Manual Mode)...
+[2026-04-07T17:54:34.894666] Source Clone Successful.
+[2026-04-07T17:54:34.895734] Resolved Target: shreyaa0928/portfolio_clone
+[2026-04-07T17:54:34.897577] Unprotecting 'main' branch on GitLab...
+[2026-04-07T17:54:35.490250] 'main' branch unprotected.
+[2026-04-07T17:54:35.492186] Executing Hardforce Push (Manual)...
+[2026-04-07T17:54:42.696278] Manual Migration Complete.
+[2026-04-07T17:54:42.726915] --- Diagnostic End ---
+

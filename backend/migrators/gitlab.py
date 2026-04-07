@@ -211,6 +211,14 @@ class GitLabMigrator(BaseMigrator):
             # Step 2: Prepare Target URL (Standard GitLab OAuth2 Auth)
             target_url = f"https://oauth2:{self.token}@gitlab.com/{self.repo}.git"
             log(f"Resolved Target: {self.repo}")
+
+            # NEW: UNPROTECT BRANCH (GitLab defaults protect 'main')
+            try:
+                log("Unprotecting 'main' branch on GitLab...")
+                self.session.delete(f"{self.BASE}/projects/{self.encoded}/protected_branches/main")
+                log("'main' branch unprotected.")
+            except Exception as e:
+                log(f"Unprotect Note: {str(e)}") # Might not exist yet, ignore
             
             # Step 3: Manual Push All
             log("Executing Hardforce Push (Manual)...")
