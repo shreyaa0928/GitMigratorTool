@@ -172,6 +172,7 @@ class BitBucketMigrator(BaseMigrator):
                 raise Exception(f"Source Clone Failed: {clone_proc.stderr}")
             log("Source Clone Successful.")
 
+            # Step 2: Prepare Target URL (Standard Bitbucket Token Auth)
             target_url = f"https://x-token-auth:{self.token}@bitbucket.org/{self.repo}.git"
             log(f"Target Resolved: {self.repo}")
             

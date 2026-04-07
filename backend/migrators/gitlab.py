@@ -140,17 +140,17 @@ class GitLabMigrator(BaseMigrator):
             # Improved Namespace Lookup
             if namespace_path:
                 try:
-                    # Try direct namespace first
-                    ns_data = self._get(f"/namespaces/{quote(namespace_path, safe='')}")
-                    payload["namespace_id"] = ns_data["id"]
+                    # Search namespaces (works for users and groups)
+                    ns_search = self._get(f"/namespaces?search={quote(namespace_path)}")
+                    match = next((n for n in ns_search if n["path"].lower() == namespace_path.lower()), None)
+                    if match:
+                        payload["namespace_id"] = match["id"]
+                    else:
+                        # Fallback to current user if specific namespace not found
+                        user = self._get("/user")
+                        payload["namespace_id"] = user["namespace_id"]
                 except Exception:
-                    try:
-                        # Search in groups if direct failed
-                        groups = self._get(f"/groups?search={quote(namespace_path)}")
-                        if groups and groups[0]["full_path"].lower() == namespace_path.lower():
-                            payload["namespace_id"] = groups[0]["id"]
-                    except Exception:
-                        pass
+                    pass
 
             try:
                 data = self._post("/projects", payload)
@@ -207,10 +207,9 @@ class GitLabMigrator(BaseMigrator):
                 raise Exception(f"Source Clone Failed: {clone_proc.stderr}")
             log("Source Clone Successful.")
 
-            # Step 2: Prepare Target URL
-            username = self._get_username()
-            target_url = f"https://{username}:{self.token}@gitlab.com/{self.repo}.git"
-            log(f"Resolved Target: {self.repo} (User: {username})")
+            # Step 2: Prepare Target URL (Standard GitLab OAuth2 Auth)
+            target_url = f"https://oauth2:{self.token}@gitlab.com/{self.repo}.git"
+            log(f"Resolved Target: {self.repo}")
             
             # Step 3: Manual Push All
             log("Executing Hardforce Push (Manual)...")
