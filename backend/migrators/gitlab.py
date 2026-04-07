@@ -157,9 +157,10 @@ class GitLabMigrator(BaseMigrator):
                 f"https://oauth2:{self.token}"
                 f"@gitlab.com/{self.repo}.git"
             )
+            print(f"Pushing {len(branches)} branches to {self.repo}...")
             repo.create_remote("target", target_url)
-            repo.git.push("--mirror", "target")
-            
+            repo.git.push("--mirror", "target", "--force")
+            print("Push completed successfully.")
             return {
                 "status": "success",
                 "message": "Repository fully migrated",

@@ -197,7 +197,7 @@ class GitHubMigrator(BaseMigrator):
             repo = git.Repo.clone_from(source_clone_url, temp_dir, mirror=True)
             target_url = f"https://{self.token}@github.com/{self.repo}.git"
             repo.create_remote("target", target_url)
-            repo.git.push("--mirror", "target")
+            repo.git.push("--mirror", "target", "--force")
             return {"migrated": len(branches), "total": len(branches), "status": "success"}
         except Exception as e:
             return {"migrated": 0, "status": "failed", "error": str(e)}
