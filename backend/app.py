@@ -127,9 +127,16 @@ def list_repos():
         return jsonify({"error": str(e)}), 500
  
  
+@app.before_request
+def log_request_info():
+    print(f"REQUEST: {request.method} {request.path}")
+    if request.is_json:
+        print(f"PAYLOAD: {request.json}")
+
 @app.route("/api/migrate", methods=["POST"])
 def start_migration():
     payload = request.get_json()
+    print(f"DEBUG: Starting migration job for {payload.get('source_repo')} -> {payload.get('target_repo')}")
     job_id = str(uuid.uuid4())
     migration_jobs[job_id] = {
         "job_id": job_id,
