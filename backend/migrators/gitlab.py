@@ -161,14 +161,21 @@ class GitLabMigrator(BaseMigrator):
                 temp_dir,
                 mirror=True
             )
+            # Standard PAT format: https://username:token@gitlab.com/...
+            # Using 'oauth2' or 'git' as username is common for GitLab PATs
             target_url = (
-                f"https://oauth2:{self.token}"
+                f"https://git:{self.token}"
                 f"@gitlab.com/{self.repo}.git"
             )
-            print(f"Pushing {len(branches)} branches to {self.repo}...")
+            
+            masked_target = f"https://git:***@gitlab.com/{self.repo}.git"
+            print(f"DEBUG: Mirroring to target: {masked_target}")
+            print(f"DEBUG: Source URL: {source_clone_url.split('@')[-1] if '@' in source_clone_url else source_clone_url}")
+
             repo.create_remote("target", target_url)
-            repo.git.push("--mirror", "target", "--force")
-            print("Push completed successfully.")
+            print("DEBUG: Executing git push --mirror --force...")
+            repo.git.push("target", "--mirror", "--force")
+            print("DEBUG: Push operation returned successfully.")
             return {
                 "status": "success",
                 "message": "Repository fully migrated",
