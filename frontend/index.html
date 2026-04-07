@@ -1110,25 +1110,34 @@
   <div id="toast"></div>
 
   <script>
-    // ✅ FIXED: Pointing to local server on port 5001
-    const API = 'http://localhost:5001';
+    // ✅ UNIVERSAL CONNECTOR: Detects local vs deployed automatically
+    let API = 'http://localhost:5001';
+    const DEPLOYED_URL = 'https://gitmigratortool.onrender.com';
     let currentJobId = null;
     let pollInterval = null;
     const branchTags = [];
 
-    // ── Health check ──────────────────────────────────────────────────
     async function checkHealth() {
-      try {
-        const r = await fetch(`${API}/api/health`, { signal: AbortSignal.timeout(5000) });
-        if (r.ok) {
-          const badge = document.getElementById('healthBadge');
-          badge.textContent = '● API Online';
-          badge.className = 'badge online';
-        }
-      } catch (e) {
-        document.getElementById('healthBadge').textContent = 'API Offline';
+      const targets = ['http://localhost:5001', 'http://localhost:5000', DEPLOYED_URL];
+      const badge = document.getElementById('healthBadge');
+
+      for (const url of targets) {
+        try {
+          const r = await fetch(`${url}/api/health`, { signal: AbortSignal.timeout(2000) });
+          if (r.ok) {
+            API = url;
+            const isLocal = url.includes('localhost');
+            badge.textContent = `● API Online (${isLocal ? url.split(':').pop() : 'Cloud'})`;
+            badge.className = 'badge online';
+            return;
+          }
+        } catch (e) { }
       }
+      badge.textContent = 'API Offline - Run python app.py';
+      badge.className = 'badge offline';
     }
+
+    setInterval(checkHealth, 5000);
     checkHealth();
 
     // ── Tab switching ─────────────────────────────────────────────────
