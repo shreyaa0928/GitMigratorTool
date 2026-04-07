@@ -1110,10 +1110,8 @@
   <div id="toast"></div>
 
   <script>
-    // ✅ FIX: Change this to your actual backend URL when deployed
-    // For local testing: 'http://localhost:5000'
-    // For Render deployment: 'https://YOUR-APP-NAME.onrender.com'
-    const API = 'https://gitmigratortool.onrender.com';
+    // ✅ FIXED: Pointing to local server on port 5001
+    const API = 'http://localhost:5001';
     let currentJobId = null;
     let pollInterval = null;
     const branchTags = [];
@@ -1263,6 +1261,7 @@
       setStatus('queued', 'Queued', 'Submitting migration job...', 0);
 
       try {
+        alert("DEBUG: Sending migration request to " + API + "\nPlease check your terminal now!");
         console.log("MIGRATE BUTTON CLICKED");
         const r = await fetch(`${API}/api/migrate`, {
           method: 'POST',
