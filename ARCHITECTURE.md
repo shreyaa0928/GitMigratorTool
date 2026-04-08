@@ -203,5 +203,5 @@ Background thread:
 | Scheduler | APScheduler 3.x |
 | Database | SQLite (built-in) |
 | Git ops | subprocess + git CLI |
-| Deployment (BE) | Gunicorn, Render/Railway |
-| Deployment (FE) | Vercel/Netlify (static) |
+| Deployment (BE) | Gunicorn (Local) |
+| Deployment (FE) | Python -m http.server (Local) |

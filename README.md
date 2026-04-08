@@ -2,7 +2,6 @@
 
 A comprehensive web application to migrate complete VCS systems between providers — **GitHub ↔ GitLab** — with support for full sync, scheduled sync, and selective migration of branches, tags, issues, PRs, and collaborators.
 
-🚀 **Live Demo**: [https://git-migrator-tool.vercel.app](https://git-migrator-tool-ai7q.vercel.app/)
 
 ---
 
@@ -116,37 +115,6 @@ Required scopes: `repo`, `read:org`, `write:repo_hook`
 Create at **User Settings → Access Tokens**
 
 Required scopes: `api`, `read_repository`, `write_repository`
-
----
-
-## 🌐 Deployment
-
-### Backend (Render / Railway / Fly.io)
-
-**Environment variables:**
-```
-PORT=5000
-DB_PATH=/data/migrations.db
-```
-
-**Start command:**
-```bash
-gunicorn app:app --bind 0.0.0.0:$PORT
-```
-
-**Render build command:**
-```bash
-pip install -r requirements.txt
-```
-
-### Frontend (Vercel / Netlify)
-
-The frontend is a static file. Deploy the `frontend/` directory.
-
-Update the `API` constant in `index.html` to point to your deployed backend:
-```javascript
-const API = 'https://your-backend.onrender.com';
-```
 
 ---
 

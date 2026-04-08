@@ -1099,7 +1099,6 @@
   <script>
     // ✅ UNIVERSAL CONNECTOR: Detects local vs deployed automatically
     let API = 'http://127.0.0.1:5000';
-    const DEPLOYED_URL = 'https://gitmigratortool.onrender.com';
     let currentJobId = null;
     let pollInterval = null;
     const branchTags = [];
@@ -1109,7 +1108,7 @@
       const isHttps = window.location.protocol === 'https:';
       const isLocalFile = window.location.protocol === 'file:';
 
-      const targets = ['http://127.0.0.1:5000', 'http://localhost:5000', 'http://127.0.0.1:5001', DEPLOYED_URL];
+      const targets = ['http://127.0.0.1:5000', 'http://localhost:5000', 'http://127.0.0.1:5001'];
       const badge = document.getElementById('healthBadge');
 
       for (const url of targets) {
@@ -1121,7 +1120,7 @@
           if (r.ok) {
             API = url;
             const isLocal = url.includes('127.0.0.1') || url.includes('localhost');
-            badge.textContent = isLocal ? `● READY FOR DEMO (PORT ${url.split(':').pop()})` : `● API Online (Cloud)`;
+            badge.textContent = `● READY FOR DEMO (PORT ${url.split(':').pop()})`;
             badge.className = 'badge online';
             return;
           }
