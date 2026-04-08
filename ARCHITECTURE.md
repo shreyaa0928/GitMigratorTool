@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-VCS Migrator Pro is a web application that enables complete migration of Version Control System (VCS) repositories between major providers: **GitHub**, **GitLab**, and **Bitbucket**.
+VCS Migrator Pro is a web application that enables complete migration of Version Control System (VCS) repositories between major providers: **GitHub** and **GitLab**.
 
 It supports both one-time migrations and scheduled/automated syncs.
 
@@ -27,23 +27,23 @@ It supports both one-time migrations and scheduled/automated syncs.
 │  ┌──────────────┐  ┌──────────────┐  ┌───────────────┐  │
 │  │  app.py      │  │ scheduler.py │  │    db.py      │  │
 │  │  REST Routes │  │ APScheduler  │  │ SQLite Store  │  │
-│  └──────┬───────┘  └──────┬───────┘  └───────────────┘  │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  │
 │         │                 │                               │
 │  ┌──────▼─────────────────▼───────────────────────────┐  │
 │  │           Migration Engine (Thread Pool)            │  │
-│  └──────┬──────────────┬────────────────┬─────────────┘  │
-│         │              │                │                 │
-│  ┌──────▼──────┐ ┌─────▼──────┐ ┌──────▼──────────┐     │
-│  │  GitHub     │ │  GitLab    │ │  Bitbucket      │     │
-│  │  Migrator   │ │  Migrator  │ │  Migrator       │     │
-│  └──────┬──────┘ └─────┬──────┘ └──────┬──────────┘     │
-└─────────┼──────────────┼───────────────┼─────────────────┘
-          │              │               │
-  ┌───────▼──────────────▼───────────────▼───────────┐
-  │           External VCS APIs                        │
-  │   GitHub REST API v3  │  GitLab API v4            │
-  │   Bitbucket Cloud API 2.0  │  git clone/push      │
-  └──────────────────────────────────────────────────┘
+│  └──────┬──────────────┬──────────────────────────────┘  │
+│         │              │                                 │
+│  ┌──────▼──────┐ ┌─────▼──────┐                          │
+│  │  GitHub     │ │  GitLab    │                          │
+│  │  Migrator   │ │  Migrator  │                          │
+│  └──────┬──────┘ └─────┬──────┘                          │
+└─────────┼──────────────┼─────────────────────────────────┘
+          │              │
+  ┌───────▼──────────────▼───────────┐
+  │           External VCS APIs      │
+  │   GitHub REST API v3  │  GitLab API v4   │
+  │   git clone/push                 │
+  └──────────────────────────────────┘
 ```
 
 ---
@@ -88,9 +88,8 @@ Each provider has its own class implementing `BaseMigrator`:
 
 | Class | API Used | Auth |
 |---|---|---|
-| `GitHubMigrator` | GitHub REST API v3 | Personal Access Token |
-| `GitLabMigrator` | GitLab REST API v4 | Private Token |
-| `BitBucketMigrator` | Bitbucket Cloud API 2.0 | Bearer Token |
+| `GitHub` | GitHub REST API v3 | Personal Access Token |
+| `GitLab` | GitLab REST API v4 | Private Token |
 
 **BaseMigrator** defines the contract:
 ```python
@@ -188,12 +187,9 @@ Background thread:
 | Source | Target | Status |
 |---|---|---|
 | GitHub | GitLab | ✅ Full support |
-| GitHub | Bitbucket | ✅ Full support |
 | GitLab | GitHub | ✅ Full support |
-| GitLab | Bitbucket | ✅ Full support |
-| Bitbucket | GitHub | ✅ Full support |
-| Bitbucket | GitLab | ✅ Full support |
 | GitHub | GitHub | ✅ Fork/Copy |
+| GitLab | GitLab | ✅ Fork/Copy |
 
 ---
 

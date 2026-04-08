@@ -13,7 +13,7 @@ class BaseMigrator(ABC):
             clean_repo = clean_repo.split("://")[-1]
         
         # Strip common domain prefixes
-        for domain in ["github.com/", "gitlab.com/", "bitbucket.org/"]:
+        for domain in ["github.com/", "gitlab.com/"]:
             if domain in clean_repo:
                 clean_repo = clean_repo.split(domain)[-1]
         

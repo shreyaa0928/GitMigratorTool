@@ -1,6 +1,6 @@
 # Git Migrator Tool ⚡
 
-A comprehensive web application to migrate complete VCS systems between providers — **GitHub ↔ GitLab ↔ Bitbucket** — with support for full sync, scheduled sync, and selective migration of branches, tags, issues, PRs, and collaborators.
+A comprehensive web application to migrate complete VCS systems between providers — **GitHub ↔ GitLab** — with support for full sync, scheduled sync, and selective migration of branches, tags, issues, PRs, and collaborators.
 
 🚀 **Live Demo**: [https://git-migrator-tool.vercel.app](https://git-migrator-tool-ai7q.vercel.app/)
 
@@ -10,7 +10,7 @@ A comprehensive web application to migrate complete VCS systems between provider
 
 | Feature | Description |
 |---|---|
-| **Multi-Provider** | GitHub, GitLab, Bitbucket (all combinations) |
+| **Multi-Provider** | GitHub, GitLab (all combinations) |
 | **Manual Full Sync** | One-click full repository migration |
 | **Scheduled Sync** | Interval-based or cron-based automatic sync |
 | **Selective Migration** | Choose exactly what to migrate |
@@ -43,8 +43,7 @@ VCS Migrator Pro
 │   └── migrators/
 │       ├── base.py         # Abstract base class
 │       ├── github.py       # GitHub REST API v3
-│       ├── gitlab.py       # GitLab REST API v4
-│       └── bitbucket.py    # Bitbucket Cloud API 2.0
+│       └── gitlab.py       # GitLab REST API v4
 ```
 
 ### API Endpoints
@@ -118,11 +117,6 @@ Create at **User Settings → Access Tokens**
 
 Required scopes: `api`, `read_repository`, `write_repository`
 
-### Bitbucket
-Create at **Personal settings → App passwords**
-
-Required permissions: `Repositories: Read/Write`, `Issues: Read/Write`, `Pull requests: Read/Write`
-
 ---
 
 ## 🌐 Deployment
@@ -159,7 +153,7 @@ const API = 'https://your-backend.onrender.com';
 ## 📋 Usage Guide
 
 ### 1. Manual Migration
-1. Select source provider (GitHub/GitLab/Bitbucket)
+1. Select source provider (GitHub/GitLab)
 2. Enter source access token
 3. Click **Browse** to pick a repository, or type `owner/repo`
 4. Do the same for target

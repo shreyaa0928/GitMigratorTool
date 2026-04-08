@@ -6,7 +6,6 @@ import uuid
 from datetime import datetime
 from migrators.github import GitHubMigrator
 from migrators.gitlab import GitLabMigrator
-from migrators.bitbucket import BitBucketMigrator
 from scheduler import MigrationScheduler
 from db import MigrationDB
  
@@ -19,7 +18,6 @@ scheduler = MigrationScheduler(db)
 PROVIDER_MAP = {
     "github": GitHubMigrator,
     "gitlab": GitLabMigrator,
-    "bitbucket": BitBucketMigrator,
 }
  
 migration_jobs = {}  # job_id -> status dict

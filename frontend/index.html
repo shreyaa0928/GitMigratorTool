@@ -25,7 +25,6 @@
       --yellow: #f5a623;
       --github: #e8eaf0;
       --gitlab: #fc6d26;
-      --bitbucket: #2684ff;
       --mono: 'JetBrains Mono', monospace;
       --sans: 'Syne', sans-serif;
       --radius: 10px;
@@ -286,12 +285,6 @@
       border-color: var(--gitlab);
       color: var(--gitlab);
       background: rgba(252, 109, 38, 0.08);
-    }
-
-    .provider-btn.bitbucket.active {
-      border-color: var(--bitbucket);
-      color: var(--bitbucket);
-      background: rgba(38, 132, 255, 0.08);
     }
 
     .provider-icon {
@@ -866,7 +859,7 @@
         <div class="logo-icon">⚡</div>
         <div>
           Git Migrator Tool
-          <div class="logo-sub">GitHub · GitLab · Bitbucket</div>
+          <div class="logo-sub">GitHub · GitLab</div>
         </div>
       </div>
       <div class="header-right">
@@ -897,9 +890,6 @@
               <button class="provider-btn gitlab" onclick="selectProvider('source','gitlab',this)">
                 <div class="provider-icon">🦊</div>GitLab
               </button>
-              <button class="provider-btn bitbucket" onclick="selectProvider('source','bitbucket',this)">
-                <div class="provider-icon">🪣</div>Bitbucket
-              </button>
             </div>
             <input type="hidden" id="sourceProvider" value="github">
           </div>
@@ -928,9 +918,6 @@
               </button>
               <button class="provider-btn gitlab active" onclick="selectProvider('target','gitlab',this)">
                 <div class="provider-icon">🦊</div>GitLab
-              </button>
-              <button class="provider-btn bitbucket" onclick="selectProvider('target','bitbucket',this)">
-                <div class="provider-icon">🪣</div>Bitbucket
               </button>
             </div>
             <input type="hidden" id="targetProvider" value="gitlab">

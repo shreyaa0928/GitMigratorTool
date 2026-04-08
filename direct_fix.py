@@ -9,12 +9,12 @@ if __name__ == "__main__":
     # NEW: URL Parsing for Direct Fix
     target = raw_target
     if "://" in target: target = target.split("://")[-1]
-    for domain in ["github.com/", "gitlab.com/", "bitbucket.org/"]:
+    for domain in ["github.com/", "gitlab.com/"]:
         if domain in target: target = target.split(domain)[-1]
     if target.endswith(".git"): target = target[:-4]
     
     token = input("Target Provider Token: ").strip()
-    provider = input("Target Provider (github/gitlab/bitbucket): ").strip().lower()
+    provider = input("Target Provider (github/gitlab): ").strip().lower()
 
     if not all([source, target, token, provider]):
         print("❌ All fields are required!")
@@ -24,8 +24,6 @@ if __name__ == "__main__":
             target_url = f"https://oauth2:{token}@gitlab.com/{target}.git"
         elif "github" in provider:
             target_url = f"https://x-access-token:{token}@github.com/{target}.git"
-        elif "bitbucket" in provider:
-            target_url = f"https://x-token-auth:{token}@bitbucket.org/{target}.git"
         else:
             print("❌ Unsupported provider. Using generic auth.")
             target_url = target
